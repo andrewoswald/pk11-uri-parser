@@ -50,9 +50,11 @@ Let's say you're attempting use a YubiKey in order to use it for purposes of uti
 pub fn main() -> Result<(), pk11_uri_parser::PK11URIError> {
     let pk11_uri = "pkcs11:slot=9e;object=Private key for Card Authentication;type=Private Key";
 
-    let mapping = pk11_uri_parser::parse(pk11_uri)?
+    let mapping = pk11_uri_parser::parse(pk11_uri)?;
 
     println!("mapping: {:?}", mapping);
+
+    Ok(())
 }
 ```
 which results in
