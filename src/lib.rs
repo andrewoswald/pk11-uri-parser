@@ -1,4 +1,4 @@
-//! A library to parse and validate PKCS#11 URIs in accordance to [RFC7512][rfc7512] specifications.
+//! A *zero-copy* library to parse and validate PKCS#11 URIs in accordance to [RFC7512][rfc7512] specifications.
 //!
 //!
 //!

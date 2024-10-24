@@ -1,6 +1,6 @@
 # pk11-uri-parser
 
-A library to parse and validate PKCS#11 URIs in accordance to the [RFC7512](https://datatracker.ietf.org/doc/html/rfc7512) specification.
+A *zero-copy* library to parse and validate PKCS#11 URIs in accordance to the [RFC7512](https://datatracker.ietf.org/doc/html/rfc7512) specification.
 
 ## Overview
 Users of the library do not need to be intimately familiar with specification rules regarding what attributes belong to the path-component or the query-component, or to be knowledgeable about the various vendor-specific attribute rules.
