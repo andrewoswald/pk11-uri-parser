@@ -44,7 +44,7 @@ pub fn main() {
 It's typical to do some exploration to become familiarized with how PKCS#11 URIs identify cryptographic assets.  This exploration is often* done using tools such as `p11tool` or `pkcs11-tool`, with the tool output being rather large (providing a great number of attribute/value pairs for a particular resource).  These tool-derived uris will certainly parse correctly, but a dramatically *shorter* uri will often end up being just as effective and will generally end up being more portable.  Likewise, it's out of scope for these tools to provide query-component attributes such as `pin-value` or `pin-source`.  As such, you may wish to experiment in discovering the shortest possible uri for your use-case.  This is where the `PK11URIError` will likely provide some assistance.
 
 *(sometimes it's not, and you prefer some "YOLO" testing):\
-Let's say you're attempting use a YubiKey in order to use it for purposes of utilizing an HSM-bound private key.  According to the `Key Alias per Slot and Object Type` [documentation](https://developers.yubico.com/yubico-piv-tool/YKCS11/Functions_and_values.html), it may be worthwhile to try `pkcs11:slot=9e;object=Private key for Card Authentication;type=Private Key`:
+Let's say you're attempting to use a YubiKey in order to use it for purposes of utilizing an HSM-bound private key.  According to the `Key Alias per Slot and Object Type` [documentation](https://developers.yubico.com/yubico-piv-tool/YKCS11/Functions_and_values.html), it may be worthwhile to try `pkcs11:slot=9e;object=Private key for Card Authentication;type=Private Key`:
 
 ```rust,no_run
 pub fn main() -> Result<(), pk11_uri_parser::PK11URIError> {

@@ -36,14 +36,15 @@
 //! query-component, or to be knowledgeable about the various vendor-specific attribute rules: the `PK11URIMapping`
 //! provides appropriately named methods for retrieving standard component values and an intuitive
 //! [vendor][`PK11URIMapping::vendor()`] method for retrieving *vendor-specific* attribute values.
-//! ```rust
-//! let mapping = parse(pk11_uri)?;
+//! ```
+//! let pk11_uri = "pkcs11:vendor-attribute=my_vendor_attribte?pin-source=|/usr/lib/pinomatic";
+//! let mapping = pk11_uri_parser::parse(pk11_uri).expect("mapping should be valid");
 //! if let Some(pin_source) = mapping.pin_source() {
-//!     assign_pin_source(pin_source)
+//!     // do something with `pin_source`...
 //! }
 //! // see whether we've got `vendor-attribute` values:
 //! if let Some(vendor_values) = mapping.vendor("vendor-attribute") {
-//!     assign_vendor_values(vendor_values)
+//!     // do something with `vendor_values`...
 //! }
 //! ```
 //!
@@ -60,16 +61,23 @@
 //! in a considerably shorter (and potentially more *portable*) URI.
 //!
 //! Let's say for example you are in need of utilizing an HSM-bound private key (and read "somewhere on the internet"):
-//! ```rust
+//! ```
 //! // note: this isn't a valid pkcs11 uri
 //! let pk11_uri = "pkcs11:object=Private key for Card Authentication;pin-value=123456";
-//! let mapping = parse(pk11_uri)?;
+//! let err = pk11_uri_parser::parse(pk11_uri).expect_err("empty spaces in value violation");
+//! println!("{:?}", err);
 //! ```
 //! Attempting to parse that uri will result in a [PK11URIError].
 //! ```terminal
 //! PK11URIError { pk11_uri: "pkcs11:object=Private key for Card Authentication;pin-value=123456", error_span: (7, 49), violation: "Invalid component value: Appendix A of [RFC3986] specifies component values may not contain empty spaces.", help: "Replace `Private key for Card Authentication` with `Private%20key%20for%20Card%20Authentication`." }
 //! ```
 //! Or if you'd prefer a fancier output, simply display the PK11URIError (*not* using `:?` debug):
+//! ```
+//! // note: this isn't a valid pkcs11 uri
+//! let pk11_uri = "pkcs11:object=Private key for Card Authentication;pin-value=123456";
+//! let err = pk11_uri_parser::parse(pk11_uri).expect_err("empty spaces in value violation");
+//! println!("{err}");
+//! ```
 //! ```terminal
 //! pkcs11:object=Private key for Card Authentication;pin-value=123456
 //!        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Invalid component value: Appendix A of [RFC3986] specifies component values may not contain empty spaces.
@@ -77,10 +85,11 @@
 //! help: Replace `Private key for Card Authentication` with `Private%20key%20for%20Card%20Authentication`.
 //! ```
 //! Great!  Based on the "help" text, it's a simple fix:
-//! ```rust
+//! ```
 //! // note: again, this isn't a valid pkcs11 uri
 //! let pk11_uri = "pkcs11:object=Private%20key%20for%20Card%20Authentication;pin-value=123456";
-//! let mapping = parse(pk11_uri)?;
+//! let err = pk11_uri_parser::parse(pk11_uri).expect_err("query component naming collision violation");
+//! println!("{err}");
 //! ```
 //! This will once again fail to parse and brings up the fact that this library will *fail-quickly* (ie, short-circuit *further* parsing) if any violation is found.
 //! ```terminal
@@ -91,9 +100,9 @@
 //! ```
 //! In this case, `pin-value` is a standard *query-component* attribute name so its current location as a path attribute is a violation.
 //! The "help" section again offers a simple solution.
-//! ```rust
-//! let pk11_uri = "pkcs11:object=Private%20key%20for%20Card%20Authenciation?pin-value=123456"
-//! let mapping = parse(pk11_uri)?;
+//! ```no_run
+//! let pk11_uri = "pkcs11:object=Private%20key%20for%20Card%20Authenciation?pin-value=123456";
+//! pk11_uri_parser::parse(pk11_uri).expect("mapping should be valid");
 //! ```
 //! Which finally yields a valid mapping.
 //!
@@ -106,10 +115,10 @@
 //! begin with `pkcs11 warning:`.
 //!
 //! Assuming a debug build:
-//! ```rust
+//! ```no_run
 //! let pk11_uri = "pkcs11:x-muppet=cookie<^^>monster!";
-//! let mapping = parse(pk11_uri)?;
-//! let x_muppet = mapping.vendor("x-muppet").expect("valid vendor-attribute");
+//! let mapping = pk11_uri_parser::parse(pk11_uri).expect("mapping should be valid");
+//! let x_muppet = mapping.vendor("x-muppet").expect("valid x-muppet vendor-attribute");
 //! println!("x-muppet: {:?}", x_muppet);
 //! ```
 //! prints
