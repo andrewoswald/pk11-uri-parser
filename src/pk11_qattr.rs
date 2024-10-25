@@ -11,7 +11,7 @@ query_attributes!(
     module_path for "module-path"
 );
 
-impl<'a> PK11Attribute<'a> {
+impl<'a> PK11QAttr<'a> {
     fn validate(&self, value: &'a str) -> Result<(), ValidationErr> {
         if let Some(validation_err) = common_validation(value) {
             return Err(validation_err);
@@ -41,6 +41,6 @@ pub(crate) fn assign<'a>(
     pk11_qattr: &'a str,
     mapping: &mut PK11URIMapping<'a>,
 ) -> Result<(), ValidationErr> {
-    let PK11Attr { attr, value } = PK11Attr::try_from(pk11_qattr)?;
+    let QueryAttribute{ attr, value } = QueryAttribute::try_from(pk11_qattr)?;
     attr.assign(value, mapping)
 }

@@ -32,7 +32,7 @@ path_attributes!(
     slot_id for "slot-id"
 );
 
-impl<'a> PK11Attribute<'a> {
+impl<'a> PK11PAttr<'a> {
     fn validate(&self, value: &'a str) -> Result<(), ValidationErr> {
         match self {
             token(_)
@@ -106,6 +106,6 @@ pub(crate) fn assign<'a>(
     pk11_pattr: &'a str,
     mapping: &mut PK11URIMapping<'a>,
 ) -> Result<(), ValidationErr> {
-    let PK11Attr { attr, value } = PK11Attr::try_from(pk11_pattr)?;
+    let PathAttribute { attr, value } = PathAttribute::try_from(pk11_pattr)?;
     attr.assign(value, mapping)
 }

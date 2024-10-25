@@ -96,9 +96,12 @@ macro_rules! pk11_attributes {
 /// *multiple* values, the *path* only allows distinct attribute names (no duplicates).
 macro_rules! path_attributes {
     { $( $name:ident for $text:literal),+ } => {
+        use PK11Attribute as PK11PAttr;
+        use PK11Attr as PathAttribute;
+
         pk11_attributes!($( $name for $text),+ );
 
-        impl <'a> PK11Attribute<'a> {
+        impl <'a> PK11PAttr<'a> {
             fn assign(&self, value: &'a str, mapping: &mut PK11URIMapping<'a>) -> Result<(), ValidationErr> {
                 match self {
                     $( Self::$name(attribute) => {
@@ -131,9 +134,12 @@ macro_rules! path_attributes {
 /// Vendor-specific attributes may accumulate *multiple* values when specified in the query component.
 macro_rules! query_attributes {
     { $( $name:ident for $text:literal),+ } => {
+        use PK11Attribute as PK11QAttr;
+        use PK11Attr as QueryAttribute;
+
         pk11_attributes!($( $name for $text),+ );
 
-        impl <'a> PK11Attribute<'a> {
+        impl <'a> PK11QAttr<'a> {
             fn assign(&self, value: &'a str, mapping: &mut PK11URIMapping<'a>) -> Result<(), ValidationErr> {
                 match self {
                     $( Self::$name(attribute) => {
