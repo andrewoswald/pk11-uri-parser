@@ -102,7 +102,7 @@ macro_rules! path_attributes {
         pk11_attributes!($( $name for $text),+ );
 
         impl <'a> PK11PAttr<'a> {
-            fn assign(&self, value: &'a str, mapping: &mut PK11URIMapping<'a>) -> Result<(), ValidationErr> {
+            fn assign(self, value: &'a str, mapping: &mut PK11URIMapping<'a>) -> Result<(), ValidationErr> {
                 match self {
                     $( Self::$name(attribute) => {
                         if mapping.$name.is_none() {
@@ -140,7 +140,7 @@ macro_rules! query_attributes {
         pk11_attributes!($( $name for $text),+ );
 
         impl <'a> PK11QAttr<'a> {
-            fn assign(&self, value: &'a str, mapping: &mut PK11URIMapping<'a>) -> Result<(), ValidationErr> {
+            fn assign(self, value: &'a str, mapping: &mut PK11URIMapping<'a>) -> Result<(), ValidationErr> {
                 match self {
                     $( Self::$name(attribute) => {
                         if mapping.$name.is_none() {
