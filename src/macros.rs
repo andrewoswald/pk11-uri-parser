@@ -29,6 +29,7 @@ macro_rules! pk11_attributes {
             value: &'a str
         }
 
+        #[cfg(feature = "validation")]
         impl<'a> TryFrom<&'a str> for PK11Attr<'a> {
             type Error = ValidationErr;
 
@@ -54,22 +55,47 @@ macro_rules! pk11_attributes {
             }
         }
 
+        #[cfg(not(feature = "validation"))]
+        impl<'a> From<&'a str> for PK11Attr<'a> {
+
+            fn from(pk11_attr: &'a str) -> Self {
+                // Intentionally *not* putting the empty check here
+                // (and incurring its associated O(n) runtime cost);
+                // the empty check gets handled further downstream if
+                // the below "Malformed component." `ok_or` arm is invoked.
+                let (attribute, value) = pk11_attr
+                    .split_once('=')
+                    .map(|(attribute, value)| (attribute.trim(), value.trim()))
+                    .expect("valid attribute/value pair");
+
+                let attr = PK11Attribute::from(attribute);
+
+                // Implementation specific (hand-coded) callback:
+                let _ = attr.validate(value);
+
+                PK11Attr { attr, value }
+            }
+        }
+
         use self::PK11Attribute::{$( $name),+, VAttr};
 
         #[allow(non_camel_case_types)]
         #[derive(Debug)]
         enum PK11Attribute<'a> {
-            $( $name(&'static str), )+
+            $( #[cfg(any(feature = "validation", all(debug_assertions, feature = "debug_warnings")))] $name(&'static str), )+
+            $( #[cfg(not(any(feature = "validation", all(debug_assertions, feature = "debug_warnings"))))] $name(), )+
             VAttr(VendorAttribute<'a>),
         }
 
+        #[cfg(feature = "validation")]
         impl <'a> TryFrom<&'a str> for PK11Attribute<'a> {
             type Error = ValidationErr;
 
             fn try_from(value: &'a str) -> Result<Self, Self::Error> {
                 let attribute = match value {
                     // standard attribute names:
-                    $( $text => $name($text), )+
+                    $( #[cfg(any(feature = "validation", all(debug_assertions, feature = "debug_warnings")))] $text => $name($text), )+
+                    $( #[cfg(not(any(feature = "validation", all(debug_assertions, feature = "debug_warnings"))))] $text => $name(), )+
                     // non-standard: possibly a vendor-specific,
                     // misplaced standard, or empty attribute:
                     non_standard => VAttr(VendorAttribute::try_from(non_standard)?)
@@ -79,9 +105,28 @@ macro_rules! pk11_attributes {
             }
         }
 
-        #[cfg(debug_assertions)]
+        #[cfg(not(feature = "validation"))]
+        impl <'a> From<&'a str> for PK11Attribute<'a> {
+            fn from(value: &'a str) -> Self {
+                match value {
+                    // standard attribute names:
+                    $( #[cfg(any(feature = "validation", all(debug_assertions, feature = "debug_warnings")))] $text => $name($text), )+
+                    $( #[cfg(not(any(feature = "validation", all(debug_assertions, feature = "debug_warnings"))))] $text => $name(), )+
+                    // non-standard:
+                    non_standard => VAttr(VendorAttribute::from(non_standard))
+                }
+            }
+        }
+
         impl <'a> PK11Attribute<'a> {
+
+            #[cfg(not(all(feature = "validation", feature = "debug_warnings")))]
+            fn validate(&self, _: &'a str) -> Result<(), ValidationErr> {
+                Ok(())
+            }
+
             // Used for warning messages:
+            #[cfg(all(debug_assertions, feature = "debug_warnings"))]
             fn to_str(&self) -> &'a str {
                 match self {
                     $( $name(name) => name, )+
@@ -102,6 +147,7 @@ macro_rules! path_attributes {
         pk11_attributes!($( $name for $text),+ );
 
         impl <'a> PK11PAttr<'a> {
+            #[cfg(feature = "validation")]
             fn assign(self, value: &'a str, mapping: &mut PK11URIMapping<'a>) -> Result<(), ValidationErr> {
                 match self {
                     $( Self::$name(attribute) => {
@@ -127,6 +173,19 @@ macro_rules! path_attributes {
                 }
                 Ok(())
             }
+
+            #[cfg(not(feature = "validation"))]
+            fn assign(self, value: &'a str, mapping: &mut PK11URIMapping<'a>) -> Result<(), ValidationErr> {
+                match self {
+                    $( Self::$name() => {
+                        mapping.$name = Some(value)
+                    }, )+
+                    VAttr(vendor_attribute) => {
+                        mapping.vendor.insert(vendor_attribute.0, vec![value]);
+                    }
+                }
+                Ok(())
+            }
         }
     };
 }
@@ -140,6 +199,7 @@ macro_rules! query_attributes {
         pk11_attributes!($( $name for $text),+ );
 
         impl <'a> PK11QAttr<'a> {
+            #[cfg(feature = "validation")]
             fn assign(self, value: &'a str, mapping: &mut PK11URIMapping<'a>) -> Result<(), ValidationErr> {
                 match self {
                     $( Self::$name(attribute) => {
@@ -151,6 +211,17 @@ macro_rules! query_attributes {
                                 help: String::from("A PKCS #11 URI must not contain duplicate standard attributes of the same name in the URI query component.")
                             })
                         }
+                    }, )+
+                    VAttr(vendor_attribute) => mapping.vendor.entry(vendor_attribute.0).or_default().push(value)
+                }
+                Ok(())
+            }
+
+            #[cfg(not(feature = "validation"))]
+            fn assign(self, value: &'a str, mapping: &mut PK11URIMapping<'a>) -> Result<(), ValidationErr> {
+                match self {
+                    $( Self::$name() => {
+                        mapping.$name = Some(value)
                     }, )+
                     VAttr(vendor_attribute) => mapping.vendor.entry(vendor_attribute.0).or_default().push(value)
                 }

@@ -265,6 +265,7 @@ impl<'a> PK11URIMapping<'a> {
 ///
 /// [rfc7512]: <https://datatracker.ietf.org/doc/html/rfc7512>
 pub fn parse(pk11_uri: &str) -> Result<PK11URIMapping, PK11URIError> {
+    #[cfg(feature = "validation")]
     if !pk11_uri.starts_with(PKCS11_SCHEME) {
         return Err(PK11URIError {
             pk11_uri: tidy(pk11_uri),
@@ -361,7 +362,7 @@ pub fn parse(pk11_uri: &str) -> Result<PK11URIMapping, PK11URIError> {
         // "...semantics of using both attributes in the same URI string is implementation specific
         //  but such use SHOULD be avoided.  Attribute "module-name" is preferred to "module-path" due
         //  to its system-independent nature, but the latter may be more suitable for development and debugging."
-        #[cfg(debug_assertions)]
+        #[cfg(all(debug_assertions, feature = "debug_warnings"))]
         if mapping.module_name.is_some() && mapping.module_path.is_some() {
             println!(
                 "pkcs11 warning: using both `module-name` and `module-path` SHOULD be avoided. \
@@ -370,7 +371,7 @@ pub fn parse(pk11_uri: &str) -> Result<PK11URIMapping, PK11URIError> {
         }
 
         // "If a URI contains both "pin-source" and "pin-value" query attributes, the URI SHOULD be refused as invalid."
-        #[cfg(debug_assertions)]
+        #[cfg(all(debug_assertions, feature = "debug_warnings"))]
         if mapping.pin_source.is_some() && mapping.pin_value.is_some() {
             println!(
                 r#"pkcs11 warning: a PKCS#11 URI containing both "pin-source" and "pin-value" query attributes SHOULD be refused as invalid."#

@@ -1,18 +1,24 @@
-use super::common::{common_validation, ValidationErr, VendorAttribute};
+#[cfg(feature = "validation")]
+use super::common::common_validation;
+use super::common::{ValidationErr, VendorAttribute};
 use super::PK11URIMapping;
+#[cfg(any(feature = "validation", all(debug_assertions, feature = "debug_warnings")))]
 use once_cell::sync::Lazy;
+#[cfg(any(feature = "validation", all(debug_assertions, feature = "debug_warnings")))]
 use regex::Regex;
 
-#[cfg(debug_assertions)]
+#[cfg(all(debug_assertions, feature = "debug_warnings"))]
 static PERCENT_ENCODING_REGEX: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"^(%[a-f?A-F?\d?]{2})+$").expect("regex for percent-encoding validation")
 });
-#[cfg(debug_assertions)]
+#[cfg(all(debug_assertions, feature = "debug_warnings"))]
 use super::common::maybe_suggest_percent_encoding;
 
+#[cfg(feature = "validation")]
 static LIBRARY_VERSION_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"^\d+(\.\d+){0,1}$").expect("regex for library-version validation"));
 
+#[cfg(feature = "validation")]
 static SLOT_ID_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"^\d+$").expect("regex for slot-id validation"));
 
@@ -33,6 +39,7 @@ path_attributes!(
 );
 
 impl<'a> PK11PAttr<'a> {
+    #[cfg(feature = "validation")]
     fn validate(&self, value: &'a str) -> Result<(), ValidationErr> {
         match self {
             token(_)
@@ -60,7 +67,7 @@ impl<'a> PK11PAttr<'a> {
                 }
 
                 // If debug build, emit warning messages for RFC7512 "SHOULD" ... violations:
-                #[cfg(debug_assertions)]
+                #[cfg(all(debug_assertions, feature = "debug_warnings"))]
                 if matches!(self, id(_)) && !PERCENT_ENCODING_REGEX.is_match(value) {
                     println!("pkcs11 warning: the whole value of the `id` attribute SHOULD be percent-encoded: id={value}.");
                 } else {
@@ -100,12 +107,28 @@ impl<'a> PK11PAttr<'a> {
         }
         Ok(())
     }
+
+    #[cfg(all(not(feature = "validation"), all(debug_assertions, feature = "debug_warnings")))]
+    fn validate(&self, value: &'a str) -> Result<(), ValidationErr> {
+        // If debug build, emit warning messages for RFC7512 "SHOULD" ... violations:
+        #[cfg(all(debug_assertions, feature = "debug_warnings"))]
+        if matches!(self, id(_)) && !PERCENT_ENCODING_REGEX.is_match(value) {
+            println!("pkcs11 warning: the whole value of the `id` attribute SHOULD be percent-encoded: id={value}.");
+        } else {
+            const PK11_PATH_RES_AVAIL: [char; 1] = ['&'];
+            maybe_suggest_percent_encoding(self.to_str(), value, PK11_PATH_RES_AVAIL);
+        }
+        Ok(())
+    }
 }
 
 pub(crate) fn assign<'a>(
     pk11_pattr: &'a str,
     mapping: &mut PK11URIMapping<'a>,
 ) -> Result<(), ValidationErr> {
+    #[cfg(feature = "validation")]
     let PathAttribute { attr, value } = PathAttribute::try_from(pk11_pattr)?;
+    #[cfg(not(feature = "validation"))]
+    let PathAttribute { attr, value } = PathAttribute::from(pk11_pattr);
     attr.assign(value, mapping)
 }
