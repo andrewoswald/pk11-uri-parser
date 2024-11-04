@@ -1,11 +1,11 @@
 [package]
 name = "pk11-uri-parser"
-version = "0.1.1"
+version = "0.1.2"
+authors = ["Andrew Oswald <andrew.oswald@gmail.com>"]
 edition = "2021"
 license = "MIT"
 description = """
 A zero-copy library to parse and validate PKCS#11 URIs in accordance to RFC7512 specifications.
-Validation (and debug warning) functionality is completely controllable by way of the features.
 """
 repository = "https://github.com/andrewoswald/pk11-uri-parser"
 readme = "README.md"
