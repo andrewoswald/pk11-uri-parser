@@ -1,11 +1,11 @@
 [package]
 name = "pk11-uri-parser"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Andrew Oswald <andrew.oswald@gmail.com>"]
 edition = "2021"
 license = "MIT"
 description = """
-A zero-copy library to parse and validate PKCS#11 URIs in accordance to RFC7512 specifications.
+A zero-copy library to parse and (optionally) validate PKCS#11 URIs in accordance to RFC7512 specifications.
 """
 repository = "https://github.com/andrewoswald/pk11-uri-parser"
 readme = "README.md"
@@ -19,28 +19,28 @@ regex = "1.11.0"
 [features]
 
 # The default feature set is to always perform validation and
-# to provide "pkcs11 warning:" messages for debug builds
+# to provide `pkcs11 warning:` messages for debug builds
 # (assuming an attribute's value does not comply with RFC7512
 # "SHOULD/SHOULD NOT" guidelines).
 #
-# It's perfectly reasonable for "--release" builds to not require
+# It's perfectly reasonable for `--release` builds to not require
 # any runtime validation (and its slight bit of overhead), so simply
-# annotate your dependency using "default-features = false", but be
-# aware that doing so introduces expect("my expectation") calls.
+# annotate your dependency using `default-features = false`, but be
+# aware that doing so introduces `expect("my expectation")` calls.
 default = ["validation", "debug_warnings"]
 
-# The RFC7512 specification defines specific criteria for
-# acceptable attribute values. This feature evaluates attribute
-# values and enforces validity.  The library will issue a
-# PK11URIError if a value violates the specification's rules.
+# The RFC7512 specification defines criteria for acceptable attribute
+# values. This feature evaluates attribute values and enforces validity.
+# The library will issue a `PK11URIError` if a value violates the
+# specification's rules.
 validation = []
 
 # The RFC7512 specification provides optional, best-practice
 # suggestions for attribute values (and vendor-specific naming).
-# This feature evaluates attribute values and will emit "pkcs11
-# warning:" messages when said messages do not comply with the
+# This feature evaluates attribute values and will emit `pkcs11
+# warning:` messages when said messages do not comply with the
 # specification's "SHOULD/SHOULD NOT" (etc.) guidelines. As the
 # feature name implies, this feature is only relevant for debug
 # builds; warning related code is explicitly excluded from
-# "--release" builds.
+# `--release` builds.
 debug_warnings = []

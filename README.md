@@ -136,10 +136,14 @@ prints
 
 ## Crate feature flags
 
-At your disposal is the fine-grained control over validtion and debug warnings.  The default feature set it to *always* perform validation
+At your disposal: fine-grained control over validtion and debug warnings.  The default feature set it to *always* perform validation
 and to provide `pkcs11 warning:` messages when debug build attribute values do not comply with RFC7512 "SHOULD/SHOULD NOT" guidelines.  To
-do away with the default, simply assign `default-features=false` in your pk11-uri-parser dependency stanza. Please be aware, however, that doing
-so will introduce `expect("my expectation")` calls required in the parsing logic.  See the [Cargo.toml](Cargo.toml) file for more details.
+do away with the defaults, simply assign `default-features=false` in your pk11-uri-parser dependency stanza:
+```toml
+[dependencies]
+pk11-uri-parser = {version = "0.1.4", default-features = false}
+```
+Please be aware, however, that doing so will introduce `expect("my expectation")` calls required in the parsing logic.  See the [Cargo.toml](Cargo.toml) file for more details.
 
 ## License
 This project's source code and documentation are licensed under the MIT license. See the [LICENSE](LICENSE) file for details.

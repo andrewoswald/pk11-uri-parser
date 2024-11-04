@@ -140,8 +140,13 @@
 //!
 //! > "But sir, I implore you, I've *thoroughly* tested my input!"
 //!
-//! I hear you barking, big dog! It's perfectly reasonable to not want validation (and/or warnings). You
-//! can eliminate that runtime overhead by utilizing the `default-features=false` treatment on your dependency.
+//! I hear you barking, big dog! It's perfectly reasonable to *not* want validation (and/or warnings). You
+//! can eliminate that slight bit of runtime overhead by utilizing the `default-features=false` treatment
+//! on your dependency:
+//! ```toml
+//! [dependencies]
+//! pk11-uri-parser = {version = "0.1.4", default-features = false}
+//! ```
 //! It's important to note, however, that doing so will introduce `expect("my expectation")` calls to perform
 //! unwrap functionality required in the parsing.
 
