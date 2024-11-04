@@ -115,6 +115,7 @@ fn spec_examples_all_parse() {
 
 /// Attributes whose values are text may not contain spaces.
 #[test]
+#[cfg(feature = "validation")]
 fn text_values_with_empty_spaces_are_not_valid() {
     let pk11_uri = "pkcs11:token=contains empty spaces";
     parse(pk11_uri).expect_err("empty space(s) in value should not be valid");
@@ -164,6 +165,7 @@ fn text_values_with_empty_spaces_are_not_valid() {
 
 /// Attributes whose values are text may not contain the '#' char.
 #[test]
+#[cfg(feature = "validation")]
 fn text_values_with_hash_char_are_not_valid() {
     let pk11_uri = "pkcs11:token=contains#";
     parse(pk11_uri).expect_err("'#' in value should not be valid");
@@ -213,6 +215,7 @@ fn text_values_with_hash_char_are_not_valid() {
 
 /// Path attributes whose value is text may not contain the '/' char.
 #[test]
+#[cfg(feature = "validation")]
 fn path_text_values_with_backslash_not_valid() {
     let pk11_uri = "pkcs11:token=foo/bar";
     parse(pk11_uri).expect_err("'/' in value should not be valid");
@@ -251,6 +254,7 @@ fn path_text_values_with_backslash_not_valid() {
 /// Attempting to use a standard query component attribute name
 /// in the PKCS#11 URI path is not valid.
 #[test]
+#[cfg(feature = "validation")]
 fn query_component_naming_collision_are_not_valid() {
     let pk11_uri = "pkcs11:pin-value=foo";
     parse(pk11_uri).expect_err("query component naming collision should not be valid");
@@ -268,6 +272,7 @@ fn query_component_naming_collision_are_not_valid() {
 /// Attempting to use a standard path component attribute name
 /// in the PKCS#11 URI query is not valid.
 #[test]
+#[cfg(feature = "validation")]
 fn path_component_naming_collision_are_not_valid() {
     let pk11_uri = "pkcs11:?token=foo";
     parse(pk11_uri).expect_err("path component naming collision should not be valid");
@@ -335,6 +340,7 @@ fn type_has_finite_values() {
 
 /// The `pk11-lib-ver` needs to be `1*DIGIT [ "." 1*DIGIT ]`
 #[test]
+#[cfg(feature = "validation")]
 fn library_version_is_major_dot_minor() {
     let pk11_uri = "pkcs11:library-version=1";
     let mapping = parse(pk11_uri).expect("mapping should be valid");
@@ -362,6 +368,7 @@ fn library_version_is_major_dot_minor() {
 
 /// The `pk11-slot-id` needs to be `1*DIGIT`
 #[test]
+#[cfg(feature = "validation")]
 fn slot_id_needs_to_be_numeric() {
     let pk11_uri = "pkcs11:slot-id=1";
     let mapping = parse(pk11_uri).expect("mapping should be valid");
@@ -380,6 +387,7 @@ fn slot_id_needs_to_be_numeric() {
 
 /// No exceptions to no duplicate path attribute names
 #[test]
+#[cfg(feature = "validation")]
 fn duplicate_path_attributes_are_not_valid() {
     let pk11_uri = "pkcs11:token=foo;token=bar";
     parse(pk11_uri).expect_err("duplicate token attribute names should not be valid");
@@ -430,6 +438,7 @@ fn duplicate_path_attributes_are_not_valid() {
 /// Standard query attribute names may not appear more than
 /// once in a PKCS#11 query.
 #[test]
+#[cfg(feature = "validation")]
 fn duplicate_standard_query_attributes_are_not_allowed() {
     let pk11_uri = "pkcs11:?pin-source=foo&pin-source=bar";
     parse(pk11_uri).expect_err("duplicate pin-source attribute names should be not valid");

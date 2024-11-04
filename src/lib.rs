@@ -22,7 +22,7 @@
 //!
 //!     let mapping = parse(pk11_uri)?;
 //!
-//!     println!("{:?}", mapping);
+//!     println!("{mapping:?}");
 //!     Ok(())
 //! }
 //! ```
@@ -64,8 +64,8 @@
 //! ```
 //! // note: this isn't a valid pkcs11 uri
 //! let pk11_uri = "pkcs11:object=Private key for Card Authentication;pin-value=123456";
-//! let err = pk11_uri_parser::parse(pk11_uri).expect_err("empty spaces in value violation");
-//! println!("{:?}", err);
+//! #[cfg(feature = "validation")]
+//! println!("{err:?}", err=pk11_uri_parser::parse(pk11_uri).expect_err("empty spaces in value violation"));
 //! ```
 //! Attempting to parse that uri will result in a [PK11URIError].
 //! ```terminal
@@ -75,8 +75,8 @@
 //! ```
 //! // note: this isn't a valid pkcs11 uri
 //! let pk11_uri = "pkcs11:object=Private key for Card Authentication;pin-value=123456";
-//! let err = pk11_uri_parser::parse(pk11_uri).expect_err("empty spaces in value violation");
-//! println!("{err}");
+//! #[cfg(feature = "validation")]
+//! println!("{err}", err=pk11_uri_parser::parse(pk11_uri).expect_err("empty spaces in value violation"))
 //! ```
 //! ```terminal
 //! pkcs11:object=Private key for Card Authentication;pin-value=123456
@@ -88,8 +88,8 @@
 //! ```
 //! // note: again, this isn't a valid pkcs11 uri
 //! let pk11_uri = "pkcs11:object=Private%20key%20for%20Card%20Authentication;pin-value=123456";
-//! let err = pk11_uri_parser::parse(pk11_uri).expect_err("query component naming collision violation");
-//! println!("{err}");
+//! #[cfg(feature = "validation")]
+//! println!("{err}", err=pk11_uri_parser::parse(pk11_uri).expect_err("query component naming collision violation"));
 //! ```
 //! This will once again fail to parse and brings up the fact that this library will *fail-quickly* (ie, short-circuit *further* parsing) if any violation is found.
 //! ```terminal
@@ -131,6 +131,19 @@
 //! x-muppet: ["cookie<^^>monster!"]
 //! ```
 //! Any warning related code is explicitly **not** included in `--release` builds.
+//!
+//!  ## Crate feature flags
+//!
+//! As alluded to above, the crate's **default** feature set is to *always* perform validation and for
+//! debug builds, emit `pkcs11 warning:` messages when values do not comply with RFC7512 "SHOULD/
+//! SHOULD NOT" guidelines.
+//!
+//! > "But sir, I implore you, I've *thoroughly* tested my input!"
+//!
+//! I hear you barking, big dog! It's perfectly reasonable to not want validation (and/or warnings). You
+//! can eliminate that runtime overhead by utilizing the `--no-default-features` treatment on your dependency.
+//! It's important to note, however, that doing so will introduce `expect("my expectation")` calls to perform
+//! unwrap functionality required in the parsing.
 
 use std::collections::HashMap;
 use std::fmt;
@@ -265,6 +278,7 @@ impl<'a> PK11URIMapping<'a> {
 ///
 /// [rfc7512]: <https://datatracker.ietf.org/doc/html/rfc7512>
 pub fn parse(pk11_uri: &str) -> Result<PK11URIMapping, PK11URIError> {
+    #[cfg(feature = "validation")]
     if !pk11_uri.starts_with(PKCS11_SCHEME) {
         return Err(PK11URIError {
             pk11_uri: tidy(pk11_uri),
@@ -361,7 +375,7 @@ pub fn parse(pk11_uri: &str) -> Result<PK11URIMapping, PK11URIError> {
         // "...semantics of using both attributes in the same URI string is implementation specific
         //  but such use SHOULD be avoided.  Attribute "module-name" is preferred to "module-path" due
         //  to its system-independent nature, but the latter may be more suitable for development and debugging."
-        #[cfg(debug_assertions)]
+        #[cfg(all(debug_assertions, feature = "debug_warnings"))]
         if mapping.module_name.is_some() && mapping.module_path.is_some() {
             println!(
                 "pkcs11 warning: using both `module-name` and `module-path` SHOULD be avoided. \
@@ -370,7 +384,7 @@ pub fn parse(pk11_uri: &str) -> Result<PK11URIMapping, PK11URIError> {
         }
 
         // "If a URI contains both "pin-source" and "pin-value" query attributes, the URI SHOULD be refused as invalid."
-        #[cfg(debug_assertions)]
+        #[cfg(all(debug_assertions, feature = "debug_warnings"))]
         if mapping.pin_source.is_some() && mapping.pin_value.is_some() {
             println!(
                 r#"pkcs11 warning: a PKCS#11 URI containing both "pin-source" and "pin-value" query attributes SHOULD be refused as invalid."#

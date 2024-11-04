@@ -6,6 +6,16 @@ pub(crate) struct ValidationErr {
     pub(crate) help: String,
 }
 
+#[cfg(feature = "validation")]
+pub(crate) trait Validation<'a> {
+    fn validate(&self, value: &'a str) -> Result<(), ValidationErr>;
+}
+
+#[cfg(all(debug_assertions, feature = "debug_warnings"))]
+pub(crate) trait Warning<'a> {
+    fn maybe_warn(&self, value: &'a str);
+}
+
 /// A "newtype" that encapsulates `1*pk11-v-attr-nm-char` vendor-specific
 /// naming enforcement as well as verifying we don't allow standard
 /// attribute naming collisions.  This is basically where everything that's
@@ -14,6 +24,7 @@ pub(crate) struct ValidationErr {
 #[derive(Debug)]
 pub(crate) struct VendorAttribute<'a>(pub(crate) &'a str);
 
+#[cfg(feature = "validation")]
 impl<'a> TryFrom<&'a str> for VendorAttribute<'a> {
     type Error = ValidationErr;
 
@@ -77,7 +88,23 @@ impl<'a> TryFrom<&'a str> for VendorAttribute<'a> {
     }
 }
 
+#[cfg(not(feature = "validation"))]
+impl<'a> From<&'a str> for VendorAttribute<'a> {
+
+    fn from(vendor_attr: &'a str) -> Self {
+        #[cfg(all(debug_assertions, feature = "debug_warnings"))]
+        if vendor_attr.starts_with("x-") {
+            println!(
+                r#"pkcs11 warning: per RFC7512, the previously used convention of starting vendor attributes with an "x-" prefix is now deprecated.  Identified: `{vendor_attr}`."#
+            );
+        }
+
+        VendorAttribute(vendor_attr)
+    }
+}
+
 /// Values for *both* path and query components must not contain empty spaces or the '#' character.
+#[cfg(feature = "validation")]
 pub(crate) fn common_validation(value: &str) -> Option<ValidationErr> {
     if value.contains(' ') {
         return Some(ValidationErr {
@@ -105,7 +132,7 @@ pub(crate) fn common_validation(value: &str) -> Option<ValidationErr> {
 /// to identify potential issues of unsupported characters.  The intent
 /// of this function is to properly test attribute values in debug builds
 /// and make appropriate changes for usage prior to release builds.
-#[cfg(debug_assertions)]
+#[cfg(all(debug_assertions, feature = "debug_warnings"))]
 pub(crate) fn maybe_suggest_percent_encoding<const T: usize>(
     attribute: &str,
     value: &str,
