@@ -1,18 +1,24 @@
 #[cfg(feature = "validation")]
-use super::common::common_validation;
+use super::common::{common_validation, Validation};
 use super::common::{ValidationErr, VendorAttribute};
 use super::PK11URIMapping;
-#[cfg(any(feature = "validation", all(debug_assertions, feature = "debug_warnings")))]
+#[cfg(any(
+    feature = "validation",
+    all(debug_assertions, feature = "debug_warnings")
+))]
 use once_cell::sync::Lazy;
-#[cfg(any(feature = "validation", all(debug_assertions, feature = "debug_warnings")))]
+#[cfg(any(
+    feature = "validation",
+    all(debug_assertions, feature = "debug_warnings")
+))]
 use regex::Regex;
 
+#[cfg(all(debug_assertions, feature = "debug_warnings"))]
+use super::common::{maybe_suggest_percent_encoding, Warning};
 #[cfg(all(debug_assertions, feature = "debug_warnings"))]
 static PERCENT_ENCODING_REGEX: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"^(%[a-f?A-F?\d?]{2})+$").expect("regex for percent-encoding validation")
 });
-#[cfg(all(debug_assertions, feature = "debug_warnings"))]
-use super::common::maybe_suggest_percent_encoding;
 
 #[cfg(feature = "validation")]
 static LIBRARY_VERSION_REGEX: Lazy<Regex> =
@@ -38,8 +44,8 @@ path_attributes!(
     slot_id for "slot-id"
 );
 
-impl<'a> PK11PAttr<'a> {
-    #[cfg(feature = "validation")]
+#[cfg(feature = "validation")]
+impl<'a> Validation<'a> for PK11PAttr<'a> {
     fn validate(&self, value: &'a str) -> Result<(), ValidationErr> {
         match self {
             token(_)
@@ -64,15 +70,6 @@ impl<'a> PK11PAttr<'a> {
                         violation: String::from("Invalid `pk11-pattr`: The general '/' delimiter must always be percent-encoded in a path component."),
                         help: format!("Replace `{value}` with `{fixed}`.", fixed=value.replace('/', "%2F"))
                     });
-                }
-
-                // If debug build, emit warning messages for RFC7512 "SHOULD" ... violations:
-                #[cfg(all(debug_assertions, feature = "debug_warnings"))]
-                if matches!(self, id(_)) && !PERCENT_ENCODING_REGEX.is_match(value) {
-                    println!("pkcs11 warning: the whole value of the `id` attribute SHOULD be percent-encoded: id={value}.");
-                } else {
-                    const PK11_PATH_RES_AVAIL: [char; 1] = ['&'];
-                    maybe_suggest_percent_encoding(self.to_str(), value, PK11_PATH_RES_AVAIL);
                 }
             }
             r#type(_) => {
@@ -107,18 +104,32 @@ impl<'a> PK11PAttr<'a> {
         }
         Ok(())
     }
+}
 
-    #[cfg(all(not(feature = "validation"), all(debug_assertions, feature = "debug_warnings")))]
-    fn validate(&self, value: &'a str) -> Result<(), ValidationErr> {
-        // If debug build, emit warning messages for RFC7512 "SHOULD" ... violations:
-        #[cfg(all(debug_assertions, feature = "debug_warnings"))]
-        if matches!(self, id(_)) && !PERCENT_ENCODING_REGEX.is_match(value) {
-            println!("pkcs11 warning: the whole value of the `id` attribute SHOULD be percent-encoded: id={value}.");
-        } else {
-            const PK11_PATH_RES_AVAIL: [char; 1] = ['&'];
-            maybe_suggest_percent_encoding(self.to_str(), value, PK11_PATH_RES_AVAIL);
+#[cfg(all(debug_assertions, feature = "debug_warnings"))]
+impl<'a> Warning<'a> for PK11PAttr<'a> {
+    fn maybe_warn(&self, value: &'a str) {
+        match self {
+            id(_) => {
+                if !PERCENT_ENCODING_REGEX.is_match(value) {
+                    println!("pkcs11 warning: the whole value of the `id` attribute SHOULD be percent-encoded: id={value}.");
+                }
+            }
+            token(_)
+            | manufacturer(_)
+            | serial(_)
+            | model(_)
+            | library_manufacturer(_)
+            | library_description(_)
+            | object(_)
+            | slot_description(_)
+            | slot_manufacturer(_)
+            | VAttr(_) => {
+                const PK11_PATH_RES_AVAIL: [char; 1] = ['&'];
+                maybe_suggest_percent_encoding(self.to_str(), value, PK11_PATH_RES_AVAIL);
+            }
+            _ => {}
         }
-        Ok(())
     }
 }
 

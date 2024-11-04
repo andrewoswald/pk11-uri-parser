@@ -22,7 +22,7 @@
 //!
 //!     let mapping = parse(pk11_uri)?;
 //!
-//!     println!("{:?}", mapping);
+//!     println!("{mapping:?}");
 //!     Ok(())
 //! }
 //! ```
@@ -64,8 +64,8 @@
 //! ```
 //! // note: this isn't a valid pkcs11 uri
 //! let pk11_uri = "pkcs11:object=Private key for Card Authentication;pin-value=123456";
-//! let err = pk11_uri_parser::parse(pk11_uri).expect_err("empty spaces in value violation");
-//! println!("{:?}", err);
+//! #[cfg(feature = "validation")]
+//! println!("{err:?}", err=pk11_uri_parser::parse(pk11_uri).expect_err("empty spaces in value violation"));
 //! ```
 //! Attempting to parse that uri will result in a [PK11URIError].
 //! ```terminal
@@ -75,8 +75,8 @@
 //! ```
 //! // note: this isn't a valid pkcs11 uri
 //! let pk11_uri = "pkcs11:object=Private key for Card Authentication;pin-value=123456";
-//! let err = pk11_uri_parser::parse(pk11_uri).expect_err("empty spaces in value violation");
-//! println!("{err}");
+//! #[cfg(feature = "validation")]
+//! println!("{err}", err=pk11_uri_parser::parse(pk11_uri).expect_err("empty spaces in value violation"))
 //! ```
 //! ```terminal
 //! pkcs11:object=Private key for Card Authentication;pin-value=123456
@@ -88,8 +88,8 @@
 //! ```
 //! // note: again, this isn't a valid pkcs11 uri
 //! let pk11_uri = "pkcs11:object=Private%20key%20for%20Card%20Authentication;pin-value=123456";
-//! let err = pk11_uri_parser::parse(pk11_uri).expect_err("query component naming collision violation");
-//! println!("{err}");
+//! #[cfg(feature = "validation")]
+//! println!("{err}", err=pk11_uri_parser::parse(pk11_uri).expect_err("query component naming collision violation"));
 //! ```
 //! This will once again fail to parse and brings up the fact that this library will *fail-quickly* (ie, short-circuit *further* parsing) if any violation is found.
 //! ```terminal
@@ -131,6 +131,19 @@
 //! x-muppet: ["cookie<^^>monster!"]
 //! ```
 //! Any warning related code is explicitly **not** included in `--release` builds.
+//!
+//!  ## Crate feature flags
+//!
+//! As alluded to above, the crate's **default** feature set is to *always* perform validation and for
+//! debug builds, emit `pkcs11 warning:` messages when values do not comply with RFC7512 "SHOULD/
+//! SHOULD NOT" guidelines.
+//!
+//! > "But sir, I implore you, I've *thoroughly* tested my input!"
+//!
+//! I hear you barking, big dog! It's perfectly reasonable to not want validation (and/or warnings). You
+//! can eliminate that runtime overhead by utilizing the `--no-default-features` treatment on your dependency.
+//! It's important to note, however, that doing so will introduce `expect("my expectation")` calls to perform
+//! unwrap functionality required in the parsing.
 
 use std::collections::HashMap;
 use std::fmt;

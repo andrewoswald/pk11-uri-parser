@@ -134,5 +134,12 @@ prints
 `NATO` vendor value: ["alpha", "bravo", "charlie"]
 ```
 
+## Crate feature flags
+
+At your disposal is the fine-grained control over validtion and debug warnings.  The default feature set it to *always* perform validation
+and to provide `pkcs11 warning:` messages when debug build attribute values do not comply with RFC7512 "SHOULD/SHOULD NOT" guidelines.  To
+do away with the default, simply assign `--no-default-features` in your pk11-uri-parser dependency stanza. Please be aware, however, that doing
+so will introduce `expect("my expectation")` calls required in the parsing logic.  See the [Cargo.toml](Cargo.toml) file for more details.
+
 ## License
 This project's source code and documentation are licensed under the MIT license. See the [LICENSE](LICENSE) file for details.

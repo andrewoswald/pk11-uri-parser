@@ -51,6 +51,9 @@ macro_rules! pk11_attributes {
                 // Implementation specific (hand-coded) callback:
                 attr.validate(value)?;
 
+                #[cfg(all(debug_assertions, feature = "debug_warnings"))]
+                attr.maybe_warn(value);
+
                 Ok(PK11Attr { attr, value })
             }
         }
@@ -66,12 +69,12 @@ macro_rules! pk11_attributes {
                 let (attribute, value) = pk11_attr
                     .split_once('=')
                     .map(|(attribute, value)| (attribute.trim(), value.trim()))
-                    .expect("valid attribute/value pair");
+                    .expect("attribute/value pair should be valid");
 
                 let attr = PK11Attribute::from(attribute);
 
-                // Implementation specific (hand-coded) callback:
-                let _ = attr.validate(value);
+                #[cfg(all(debug_assertions, feature = "debug_warnings"))]
+                attr.maybe_warn(value);
 
                 PK11Attr { attr, value }
             }
@@ -120,11 +123,6 @@ macro_rules! pk11_attributes {
 
         impl <'a> PK11Attribute<'a> {
 
-            #[cfg(not(all(feature = "validation", feature = "debug_warnings")))]
-            fn validate(&self, _: &'a str) -> Result<(), ValidationErr> {
-                Ok(())
-            }
-
             // Used for warning messages:
             #[cfg(all(debug_assertions, feature = "debug_warnings"))]
             fn to_str(&self) -> &'a str {
@@ -137,8 +135,14 @@ macro_rules! pk11_attributes {
     };
 }
 
-/// The distinction here is that while vendor-specific attributes may contain
-/// *multiple* values, the *path* only allows distinct attribute names (no duplicates).
+/// In addition to establishing path enum variants and the boilerplate
+/// code that potentially calls the `Validation` trait's `validate` method
+/// and `Warning` trait's `maybe_warn` method, this macro provides the
+/// `PK11PAttr` *assign* method.  The `assign` method implementation is
+/// based on whether the `validation` feature has been enabled. The distinction
+/// between path and query component assignment, assuming the `validation` feature
+/// is enabled, is that while vendor-specific attributes may contain *multiple*
+/// values, the *path* only allows distinct attribute names (no duplicates).
 macro_rules! path_attributes {
     { $( $name:ident for $text:literal),+ } => {
         use PK11Attribute as PK11PAttr;
@@ -177,7 +181,7 @@ macro_rules! path_attributes {
             #[cfg(not(feature = "validation"))]
             fn assign(self, value: &'a str, mapping: &mut PK11URIMapping<'a>) -> Result<(), ValidationErr> {
                 match self {
-                    $( Self::$name() => {
+                    $( Self::$name(..) => {
                         mapping.$name = Some(value)
                     }, )+
                     VAttr(vendor_attribute) => {
@@ -190,7 +194,13 @@ macro_rules! path_attributes {
     };
 }
 
-/// Vendor-specific attributes may accumulate *multiple* values when specified in the query component.
+/// In addition to establishing query enum variants and the boilerplate
+/// code that potentially calls the `Validation` trait's `validate` method
+/// and `Warning` trait's `maybe_warn` method, this macro provides the
+/// `PK11QAttr` *assign* method. The `assign` method implementation is
+/// based on whether the `validation` feature has been enabled. Vendor-
+/// specific attributes may accumulate *multiple* values when specified
+/// in the query component.
 macro_rules! query_attributes {
     { $( $name:ident for $text:literal),+ } => {
         use PK11Attribute as PK11QAttr;
@@ -220,7 +230,7 @@ macro_rules! query_attributes {
             #[cfg(not(feature = "validation"))]
             fn assign(self, value: &'a str, mapping: &mut PK11URIMapping<'a>) -> Result<(), ValidationErr> {
                 match self {
-                    $( Self::$name() => {
+                    $( Self::$name(..) => {
                         mapping.$name = Some(value)
                     }, )+
                     VAttr(vendor_attribute) => mapping.vendor.entry(vendor_attribute.0).or_default().push(value)

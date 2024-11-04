@@ -6,6 +6,16 @@ pub(crate) struct ValidationErr {
     pub(crate) help: String,
 }
 
+#[cfg(feature = "validation")]
+pub(crate) trait Validation<'a> {
+    fn validate(&self, value: &'a str) -> Result<(), ValidationErr>;
+}
+
+#[cfg(all(debug_assertions, feature = "debug_warnings"))]
+pub(crate) trait Warning<'a> {
+    fn maybe_warn(&self, value: &'a str);
+}
+
 /// A "newtype" that encapsulates `1*pk11-v-attr-nm-char` vendor-specific
 /// naming enforcement as well as verifying we don't allow standard
 /// attribute naming collisions.  This is basically where everything that's
