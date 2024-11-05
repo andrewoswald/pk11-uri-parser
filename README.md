@@ -1,6 +1,6 @@
 # pk11-uri-parser
 
-A *zero-copy* library to parse and validate PKCS#11 URIs in accordance to the [RFC7512](https://datatracker.ietf.org/doc/html/rfc7512) specification.
+A *zero-copy* library to parse and (optionally) validate PKCS#11 URIs in accordance to the [RFC7512](https://datatracker.ietf.org/doc/html/rfc7512) specification.
 
 ## Overview
 Users of the library do not need to be intimately familiar with specification rules regarding what attributes belong to the path-component or the query-component, or to be knowledgeable about the various vendor-specific attribute rules.
@@ -136,7 +136,7 @@ prints
 
 ## Crate feature flags
 
-At your disposal: fine-grained control over validtion and debug warnings.  The default feature set it to *always* perform validation
+At your disposal: fine-grained control over validtion and debug warnings.  The default feature set is to *always* perform validation
 and to provide `pkcs11 warning:` messages when debug build attribute values do not comply with RFC7512 "SHOULD/SHOULD NOT" guidelines.  To
 do away with the defaults, simply assign `default-features=false` in your pk11-uri-parser dependency stanza:
 ```toml
