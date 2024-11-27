@@ -150,6 +150,7 @@
 //! It's important to note, however, that doing so will introduce `expect("my expectation")` calls to perform
 //! unwrap functionality required in the parsing.
 
+use core::error;
 use std::collections::HashMap;
 use std::fmt;
 
@@ -184,6 +185,8 @@ pub struct PK11URIError {
     /// Human-friendly suggestion of how to resolve the issue.
     help: String,
 }
+
+impl error::Error for PK11URIError {}
 
 /// Highlights the issue using the `error_span`.
 impl fmt::Display for PK11URIError {
